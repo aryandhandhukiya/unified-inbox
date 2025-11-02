@@ -1,7 +1,9 @@
-// app/inbox/InboxClient.tsx
 "use client";
 import React, { useState } from "react";
-import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import ContactList from "@/components/ContactList";
 import ChatWindow from "@/components/ChatWindow";
 import ContactModal from "@/components/ContactModel";
@@ -19,10 +21,12 @@ export default function InboxClient() {
 function InboxShell() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<"all" | "whatsapp" | "sms" | "email" | "telegram" | "discord">("all");
 
   return (
     <div className="h-screen grid grid-cols-4 bg-gray-50/50 antialiased">
-      <aside className="col-span-1 border-r border-gray-200 bg-white shadow-sm">
+      {/* Sidebar */}
+      <aside className="col-span-1 border-r border-gray-200 bg-white shadow-sm flex flex-col">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
             Unified Inbox
@@ -31,18 +35,39 @@ function InboxShell() {
             Your messages in one place
           </p>
         </div>
-        <ContactList
-          onSelect={(id) => {
-            setSelectedContactId(id);
-          }}
-        />
+
+        {/* Channel Filter */}
+        <div className="flex gap-2 px-4 py-3 border-b border-gray-100 overflow-x-auto">
+          {["all", "whatsapp", "sms", "email", "telegram", "discord"].map((ch) => (
+            <button
+              key={ch}
+              onClick={() => setSelectedChannel(ch as any)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${
+                selectedChannel === ch
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {ch}
+            </button>
+          ))}
+        </div>
+
+        {/* Contact List */}
+        <div className="flex-1 overflow-y-auto">
+          <ContactList
+            channel={selectedChannel}
+            onSelect={(id) => setSelectedContactId(id)}
+          />
+        </div>
       </aside>
 
+      {/* Main Chat Area */}
       <main className="col-span-3 bg-white">
         {selectedContactId ? (
-          <ChatWindow 
-            contactId={selectedContactId} 
-            onOpenProfile={() => setModalOpen(true)} 
+          <ChatWindow
+            contactId={selectedContactId}
+            onOpenProfile={() => setModalOpen(true)}
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">

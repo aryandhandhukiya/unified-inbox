@@ -1,8 +1,15 @@
-// app/components/ContactList.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  MessageSquare,
+  Mail,
+  Phone,
+  Send,
+  MessageCircle,
+  Hash,
+} from "lucide-react";
 
 type ContactShort = {
   id: string;
@@ -14,25 +21,49 @@ type ContactShort = {
     createdAt: string;
     direction: string;
     status: string;
+    channel: string;
   } | null;
 };
 
 export default function ContactList({
   onSelect,
+  channel,
 }: {
   onSelect: (id: string) => void;
+  channel: "all" | "whatsapp" | "sms" | "email" | "telegram" | "discord";
 }) {
   const [selected, setSelected] = useState<string | null>(null);
 
   const { data = [], isLoading } = useQuery<ContactShort[]>({
-    queryKey: ["contacts"],
+    queryKey: ["contacts", channel],
     queryFn: async () => {
       const res = await fetch("/api/contacts");
       if (!res.ok) throw new Error("Failed to fetch contacts");
-      return res.json();
+      const allContacts = await res.json();
+      if (channel === "all") return allContacts;
+      return allContacts.filter(
+        (c: any) => c.lastMessage?.channel === channel
+      );
     },
-    refetchInterval: 5000, // 5s polling for updates
+    refetchInterval: 5000, // Poll for updates every 5s
   });
+
+  const getChannelIcon = (ch: string) => {
+    switch (ch) {
+      case "whatsapp":
+        return <MessageCircle size={14} className="text-green-600" />;
+      case "sms":
+        return <Phone size={14} className="text-blue-600" />;
+      case "email":
+        return <Mail size={14} className="text-red-500" />;
+      case "telegram":
+        return <Send size={14} className="text-sky-500" />;
+      case "discord":
+        return <Hash size={14} className="text-indigo-500" />;
+      default:
+        return <MessageSquare size={14} className="text-gray-400" />;
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900">
@@ -56,6 +87,12 @@ export default function ContactList({
         {isLoading && (
           <div className="p-4 text-gray-400 text-sm">Loading contacts...</div>
         )}
+        {data.length === 0 && !isLoading && (
+          <div className="p-4 text-gray-400 text-sm">
+            No contacts found for this channel
+          </div>
+        )}
+
         {data.map((c) => {
           const lastMsg = c.lastMessage?.content ?? "No messages yet";
           const time = c.lastMessage
@@ -65,10 +102,11 @@ export default function ContactList({
               })
             : "";
 
-          // Unread if last message is inbound and not read
           const unread =
             c.lastMessage?.direction === "inbound" &&
             c.lastMessage?.status !== "read";
+
+          const channelIcon = getChannelIcon(c.lastMessage?.channel || "all");
 
           return (
             <li
@@ -86,9 +124,7 @@ export default function ContactList({
               <div className="flex items-center gap-3">
                 {/* Avatar */}
                 <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-medium">
-                  {c.name?.[0]?.toUpperCase() ??
-                    c.phone?.slice(-2) ??
-                    "?"}
+                  {c.name?.[0]?.toUpperCase() ?? c.phone?.slice(-2) ?? "?"}
                 </div>
 
                 {/* Contact Info */}
@@ -100,6 +136,7 @@ export default function ContactList({
                     <div className="text-xs text-zinc-500">{time}</div>
                   </div>
                   <div className="text-sm text-zinc-500 truncate flex items-center gap-1">
+                    {channelIcon}
                     {lastMsg.length > 40
                       ? lastMsg.substring(0, 40) + "..."
                       : lastMsg}

@@ -23,36 +23,61 @@ export default function Composer({
     setText("");
     setLoading(true);
 
-    // 1️⃣ Optimistic UI update (instant display)
-    const optimisticMessage = {
-      id: `temp-${Date.now()}`,
-      contactId,
-      content: messageText,
-      direction: "outbound",
-      channel: "whatsapp",
-      status: "sending",
-      createdAt: new Date().toISOString(),
-    };
-
-    qc.setQueryData(["messages", contactId], (old: any) => [
-      ...(old || []),
-      optimisticMessage,
-    ]);
-
-    // 2️⃣ Actually send the message
     try {
+      // 1️⃣ Fetch contact details
       const resContacts = await fetch(`/api/contacts`);
       const contacts = await resContacts.json();
       const contact = contacts.find((c: any) => c.id === contactId);
-      const to = contact?.phone;
 
+      if (!contact) {
+        throw new Error("Contact not found");
+      }
+
+      // 2️⃣ Determine the best way to reach this contact
+      let to: string;
+      let channel: string;
+
+      if (contact.email) {
+        to = contact.email;
+        channel = "email";
+      } else if (contact.phone) {
+        to = contact.phone;
+        channel = "whatsapp"; // or "sms" based on preference
+      } else if (contact.telegramId) {
+        to = contact.telegramId;
+        channel = "telegram";
+      } else if (contact.discordId) {
+        to = contact.discordId;
+        channel = "discord";
+      } else {
+        throw new Error("No contact method available");
+      }
+
+      // 3️⃣ Optimistic UI update (instant display)
+      const optimisticMessage = {
+        id: `temp-${Date.now()}`,
+        contactId,
+        content: messageText,
+        direction: "outbound",
+        channel,
+        status: "sending",
+        createdAt: new Date().toISOString(),
+      };
+
+      qc.setQueryData(["messages", contactId], (old: any) => [
+        ...(old || []),
+        optimisticMessage,
+      ]);
+
+      // 4️⃣ Actually send the message
       const res = await fetch("/api/messages/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: `whatsapp:${to}`,
+          to, // ✅ Just the email/phone/id, not prefixed
           body: messageText,
-          channel: "whatsapp",
+          channel, // ✅ Dynamic channel
+          subject: channel === "email" ? "New Message" : undefined,
         }),
       });
 
@@ -66,14 +91,16 @@ export default function Composer({
           )
         );
       } else {
-        throw new Error("Message send failed");
+        const error = await res.json();
+        console.error("Send failed:", error);
+        throw new Error(error.error || "Message send failed");
       }
     } catch (err) {
       console.error("Error sending message:", err);
       // ❌ Mark optimistic message as failed
       qc.setQueryData(["messages", contactId], (old: any) =>
         (old || []).map((msg: any) =>
-          msg.id === optimisticMessage.id
+          msg.id?.startsWith("temp-")
             ? { ...msg, status: "failed" }
             : msg
         )

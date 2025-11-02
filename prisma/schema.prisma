@@ -8,60 +8,57 @@ generator client {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  name      String?
-  email     String?   @unique
-  password  String?
-  image         String?              
-  emailVerified DateTime?            
-  role      Role      @default(VIEWER)
-  messages  Message[]
-  notes     Note[]
-  accounts  Account[]
-  sessions  Session[]
-  createdAt DateTime  @default(now())
+  id             String     @id @default(cuid())
+  name           String?
+  email          String?    @unique
+  password       String?
+  image          String?
+  emailVerified  DateTime?
+  role           Role       @default(VIEWER)
+  messages       Message[]
+  notes          Note[]
+  accounts       Account[]
+  sessions       Session[]
+  createdAt      DateTime   @default(now())
 }
 
 model Contact {
-  id           String    @id @default(cuid())
-  name         String?
-  phone        String?   @unique
-  email        String?
-  socialHandle String?
-  messages     Message[]
-  notes        Note[]
+  id            String     @id @default(cuid())
+  name          String?
+  phone         String?    @unique
+  email         String?    @unique
+  telegramId    String?    @unique
+  discordId     String?    @unique
+  socialHandle  String?
+  messages      Message[]
+  notes         Note[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt @default(now())
 }
 
 model Message {
-  id         String   @id @default(cuid())
-  contactId  String
-  userId     String?
-  channel    String   // "sms" | "whatsapp"
-  content    String
-  direction  String   // "inbound" | "outbound"
-  status     String   // "sent" | "delivered" | "read"
-  createdAt  DateTime @default(now())
-  twilioSid  String?   @unique
-  Contact    Contact  @relation(fields: [contactId], references: [id])
-  User       User?    @relation(fields: [userId], references: [id])
+  id          String     @id @default(cuid())
+  contactId   String
+  userId      String?
+  channel     ChannelType
+  content     String
+  direction   MessageDirection
+  status      MessageStatus @default(queued)
+  createdAt   DateTime   @default(now())
+  twilioSid   String?    @unique
+  Contact     Contact    @relation(fields: [contactId], references: [id])
+  User        User?      @relation(fields: [userId], references: [id])
 }
-
 
 model Note {
-  id        String   @id @default(cuid())
-  userId    String
-  contactId String
-  content   String
-  isPrivate Boolean  @default(false)
-  createdAt DateTime @default(now())
-  Contact   Contact  @relation(fields: [contactId], references: [id])
-  User      User     @relation(fields: [userId], references: [id])
-}
-
-enum Role {
-  VIEWER
-  EDITOR
-  ADMIN
+  id         String     @id @default(cuid())
+  userId     String
+  contactId  String
+  content    String
+  isPrivate  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  Contact    Contact    @relation(fields: [contactId], references: [id])
+  User       User       @relation(fields: [userId], references: [id])
 }
 
 model Account {
@@ -96,4 +93,32 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum ChannelType {
+  whatsapp
+  sms
+  email
+  telegram
+  discord
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+enum MessageStatus {
+  sent
+  delivered
+  read
+  failed
+  queued
+  unknown
+}
+
+enum Role {
+  VIEWER
+  EDITOR
+  ADMIN
 }
