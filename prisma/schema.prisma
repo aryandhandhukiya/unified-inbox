@@ -41,6 +41,7 @@ model Message {
   direction  String   // "inbound" | "outbound"
   status     String   // "sent" | "delivered" | "read"
   createdAt  DateTime @default(now())
+  twilioSid  String?   @unique
   Contact    Contact  @relation(fields: [contactId], references: [id])
   User       User?    @relation(fields: [userId], references: [id])
 }

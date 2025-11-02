@@ -143,7 +143,7 @@ export default function ChatWindow({
                       {m.status === "sent" && "✅"}
                       {m.status === "delivered" && "✅✅"}
                       {m.status === "read" && (
-                        <span className="text-blue-300">✅✅</span>
+                        <span className="text-blue-300">👀</span>
                       )}
                       {m.status === "failed" && "❌"}
                     </span>

@@ -36,6 +36,7 @@ export async function POST(req: Request) {
       from,
       to: formattedTo,
       body,
+      statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/twilio-status`,
     });
 
     // 3️⃣ Store message in DB
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
         status: message.status || "sent",
         contactId: contact.id,
         userId: null, // outbound by system or current user later
+        twilioSid: message.sid,
       },
     });
 
