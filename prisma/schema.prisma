@@ -25,7 +25,7 @@ model User {
 model Contact {
   id           String    @id @default(cuid())
   name         String?
-  phone        String?   @unique  // This is sufficient
+  phone        String?   @unique
   email        String?
   socialHandle String?
   messages     Message[]
@@ -33,16 +33,16 @@ model Contact {
 }
 
 model Message {
-  id          String   @id @default(cuid())
-  contactId   String
-  userId      String?   // ✅ optional
-  channel     String
-  content     String
-  direction   String
-  status      String
-  createdAt   DateTime @default(now())
-  Contact     Contact  @relation(fields: [contactId], references: [id])
-  User        User?    @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  contactId  String
+  userId     String?
+  channel    String   // "sms" | "whatsapp"
+  content    String
+  direction  String   // "inbound" | "outbound"
+  status     String   // "sent" | "delivered" | "read"
+  createdAt  DateTime @default(now())
+  Contact    Contact  @relation(fields: [contactId], references: [id])
+  User       User?    @relation(fields: [userId], references: [id])
 }
 
 
