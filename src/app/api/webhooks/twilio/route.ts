@@ -31,5 +31,5 @@ await prisma.message.create({
   } as any, // ✅ Temporary workaround
 });
 
-  return new Response("OK", { status: 200 });
+  return new Response("", { status: 200 });
 }

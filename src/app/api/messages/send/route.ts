@@ -3,55 +3,65 @@ import twilio from "twilio";
 import { prisma } from "@/lib/prisma";
 
 const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
 );
 
 export async function POST(req: Request) {
   try {
     const { to, body, channel } = await req.json();
 
-    // Format the numbers for WhatsApp or SMS
-    const formattedTo = channel === 'whatsapp' 
-      ? `whatsapp:${formatPhoneNumber(to)}`
-      : formatPhoneNumber(to);
+    // Format numbers for WhatsApp or SMS
+    const formattedTo =
+      channel === "whatsapp"
+        ? `whatsapp:${formatPhoneNumber(to)}`
+        : formatPhoneNumber(to);
 
-    const from = channel === 'whatsapp'
-      ? `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`
-      : process.env.TWILIO_SMS_NUMBER;
+    const from =
+      channel === "whatsapp"
+        ? `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`
+        : process.env.TWILIO_SMS_NUMBER;
 
-    console.log('Sending message:', { from, to: formattedTo, channel });
+    console.log("Sending message:", { from, to: formattedTo, channel });
 
+    // 1️⃣ Ensure contact exists (create or reuse)
+    const contact = await prisma.contact.upsert({
+      where: { phone: formattedTo },
+      update: {},
+      create: { phone: formattedTo, name: to },
+    });
+
+    // 2️⃣ Send message via Twilio
     const message = await client.messages.create({
       from,
       to: formattedTo,
       body,
     });
 
-    // Store in database
+    // 3️⃣ Store message in DB
     await prisma.message.create({
       data: {
         content: body,
         channel,
-        direction: 'outbound',
-        status: message.status,
-        contactId: to,
-        userId: 'system', // Replace with actual user ID
+        direction: "outbound",
+        status: message.status || "sent",
+        contactId: contact.id,
+        userId: null, // outbound by system or current user later
       },
     });
 
     return NextResponse.json({ success: true, sid: message.sid });
   } catch (error: any) {
-    console.error('Error sending message:', error);
+    console.error("Error sending message:", error);
     return NextResponse.json(
-      { 
+      {
         error: error.message,
         code: error.code,
         moreInfo: error.moreInfo,
         details: {
           from: process.env.TWILIO_WHATSAPP_NUMBER,
-          error: error
-        }
+          error,
+        },
       },
       { status: error.status || 500 }
     );
@@ -59,14 +69,9 @@ export async function POST(req: Request) {
 }
 
 function formatPhoneNumber(number: string): string {
-  // Remove any non-digit characters except plus sign
-  const cleaned = number.replace(/[^\d+]/g, '');
-  
-  // Add + if not present
-  if (!cleaned.startsWith('+')) {
-    // Assume Indian number if no country code
-    return cleaned.startsWith('91') ? `+${cleaned}` : `+91${cleaned}`;
+  const cleaned = number.replace(/[^\d+]/g, "");
+  if (!cleaned.startsWith("+")) {
+    return cleaned.startsWith("91") ? `+${cleaned}` : `+91${cleaned}`;
   }
-  
   return cleaned;
 }
