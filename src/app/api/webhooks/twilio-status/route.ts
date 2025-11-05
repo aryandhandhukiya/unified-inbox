@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { MessageStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
 
     await prisma.message.updateMany({
       where: { twilioSid: messageSid },
-      data: { status: messageStatus ?? "unknown" },
+      data: { status: (messageStatus ?? "unknown") as MessageStatus },
     });
 
     return new Response("OK", { status: 200 });
