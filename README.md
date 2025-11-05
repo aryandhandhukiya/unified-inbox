@@ -11,9 +11,9 @@ It provides businesses and teams a single place to view, respond to, and analyze
 
 🔗 **Deployed App:** [https://unified-inbox-sigma.vercel.app](https://unified-inbox-sigma.vercel.app)
 
-🎥 **Demo Video:**  
+## 🎥 **Demo Video:**  
+
 ▶️ [Click to watch the demo video](https://github.com/aryandhandhukiya/unified-inbox/releases/tag/V1.0.0/unified-demo.2.mp4)
----
 
 ## 🚀 Features
 
