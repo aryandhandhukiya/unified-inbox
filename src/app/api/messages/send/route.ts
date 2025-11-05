@@ -3,6 +3,7 @@ import twilio from "twilio";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { MessageStatus } from "@prisma/client";
 
 // Twilio setup
 const twilioClient = twilio(
@@ -203,7 +204,7 @@ export async function POST(req: Request) {
         content: body,
         channel: detectedChannel,
         direction: "outbound",
-        status,
+        status: status as MessageStatus,
         contactId: contact.id,
         userId: null,
         twilioSid: sid,
