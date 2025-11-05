@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       if (to.includes('@')) {
         detectedChannel = 'email';
       } else if (to.includes('whatsapp:') || to.startsWith('+')) {
-        detectedChannel = 'whatsapp'; // or 'sms' based on your preference
+        detectedChannel = 'whatsapp';
       } else {
         detectedChannel = 'sms';
       }
@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     let sendResult: any = null;
     let status = "queued";
     let sid: string | null = null;
+    let normalizedContactIdentifier: string; // ✅ Add this to store normalized identifier
 
     switch (detectedChannel) {
       case "whatsapp": {
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
 
         status = sendResult.status ?? "queued";
         sid = sendResult.sid;
+        normalizedContactIdentifier = formattedTo; // ✅ Store with whatsapp: prefix
         break;
       }
 
@@ -89,6 +91,7 @@ export async function POST(req: Request) {
 
         status = sendResult.status ?? "queued";
         sid = sendResult.sid;
+        normalizedContactIdentifier = formattedTo; // ✅ Just the phone number
         break;
       }
 
@@ -103,6 +106,7 @@ export async function POST(req: Request) {
         
         status = "sent";
         sid = info.messageId;
+        normalizedContactIdentifier = to;
         break;
       }
 
@@ -110,25 +114,46 @@ export async function POST(req: Request) {
         const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN!;
         const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
 
-        await fetch(telegramUrl, {
+        const telegramRes = await fetch(telegramUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: to, text: body }),
+          body: JSON.stringify({
+            chat_id: to,
+            text: body,
+          }),
         });
 
+        const telegramData = await telegramRes.json();
+        if (!telegramData.ok) {
+          throw new Error(`Telegram error: ${telegramData.description}`);
+        }
+
         status = "sent";
+        sid = telegramData.result?.message_id?.toString() || null;
+        normalizedContactIdentifier = to;
         break;
       }
 
       case "discord": {
         const discordWebhook = process.env.DISCORD_WEBHOOK_URL!;
-        await fetch(discordWebhook, {
+        if (!discordWebhook) throw new Error("Missing DISCORD_WEBHOOK_URL in .env");
+
+        const discordRes = await fetch(discordWebhook, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: body }),
+          body: JSON.stringify({
+            content: body,
+            username: "Unified Inbox Bot",
+          }),
         });
 
+        if (!discordRes.ok) {
+          const errorText = await discordRes.text();
+          throw new Error(`Discord webhook failed: ${errorText}`);
+        }
+
         status = "sent";
+        normalizedContactIdentifier = to;
         break;
       }
 
@@ -136,6 +161,7 @@ export async function POST(req: Request) {
         throw new Error(`Unsupported channel: ${detectedChannel}`);
     }
 
+    // ✅ Create/find contact using the SAME format as webhooks
     let contact;
 
     if (detectedChannel === "email") {
@@ -145,11 +171,11 @@ export async function POST(req: Request) {
         create: { email: to, name: to },
       });
     } else if (detectedChannel === "whatsapp" || detectedChannel === "sms") {
-      const formattedPhone = formatPhoneNumber(to);
+      // ✅ Use the normalized identifier (includes whatsapp: prefix for WhatsApp)
       contact = await prisma.contact.upsert({
-        where: { phone: formattedPhone },
+        where: { phone: normalizedContactIdentifier },
         update: {},
-        create: { phone: formattedPhone, name: to },
+        create: { phone: normalizedContactIdentifier, name: normalizedContactIdentifier },
       });
     } else if (detectedChannel === "telegram") {
       contact = await prisma.contact.upsert({
@@ -168,6 +194,8 @@ export async function POST(req: Request) {
         data: { name: to },
       });
     }
+
+    console.log("✅ Contact found/created:", { id: contact.id, phone: contact.phone });
 
     // 🗄️ Store message in DB
     await prisma.message.create({
@@ -207,7 +235,11 @@ function formatPhoneNumber(number: string): string {
     throw new Error("Invalid phone number: must be a non-empty string");
   }
 
-  const cleaned = number.replace(/[^\d+]/g, "");
+  // Remove whatsapp: prefix if present
+  let cleaned = number.replace('whatsapp:', '');
+  
+  // Remove everything except digits and +
+  cleaned = cleaned.replace(/[^\d+]/g, "");
   
   if (cleaned.length === 0 || cleaned === '+') {
     throw new Error(`Invalid phone number: no digits found in "${number}"`);

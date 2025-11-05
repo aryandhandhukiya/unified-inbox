@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   MessageSquare,
   Mail,
+  Search,
   Phone,
   Send,
   MessageCircle,
@@ -66,19 +67,20 @@ export default function ContactList({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
-        <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
+      <div className="p-4 border-b border-slate-200">
+        <h2 className="text-lg font-semibold text-black">
           Contacts
         </h2>
       </div>
 
       {/* Search bar */}
       <div className="px-3 py-2">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
         <input
           placeholder="Search..."
-          className="w-full p-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
@@ -115,22 +117,22 @@ export default function ContactList({
                 setSelected(c.id);
                 onSelect(c.id);
               }}
-              className={`p-3 cursor-pointer transition ${
-                selected === c.id
-                  ? "bg-blue-50 dark:bg-blue-950"
-                  : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              }`}
-            >
+  className={`p-3 cursor-pointer transition-colors duration-200 rounded-lg ${
+    selected === c.id
+      ? "bg-zinc-600 text-white" // selected state: dark zinc background + white text
+      : "bg-transparent hover:bg-zinc-100 hover:text-black text-white dark:hover:bg-zinc-700"
+  }`}
+>
               <div className="flex items-center gap-3">
                 {/* Avatar */}
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-medium">
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-black-600 dark:text-blue-300 font-medium">
                   {c.name?.[0]?.toUpperCase() ?? c.phone?.slice(-2) ?? "?"}
                 </div>
 
                 {/* Contact Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <div className="font-medium text-zinc-900 dark:text-black-100 truncate">
                       {c.name ?? c.phone}
                     </div>
                     <div className="text-xs text-zinc-500">{time}</div>

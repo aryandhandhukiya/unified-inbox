@@ -1,23 +1,52 @@
 "use client";
-import { signIn } from "next-auth/react";
+
 import { useState } from "react";
-import { Mail, Lock, Loader2, MessageSquare, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { User, Mail, Lock, Loader2, MessageSquare, Sparkles, Check } from "lucide-react";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function RegisterPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await signIn("credentials", {
-      email,
-      password,
-      callbackUrl: "/inbox",
-    });
-    setLoading(false);
-  };
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Registration failed");
+      }
+
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const features = [
+    "Connect multiple messaging platforms",
+    "Unified inbox for all conversations",
+    "Real-time message sync",
+    "Smart contact management"
+  ];
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -40,32 +69,36 @@ export default function LoginPage() {
           
           <div className="space-y-6">
             <h2 className="text-5xl font-bold text-white leading-tight">
-              All your messages,
+              Join thousands of users
               <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                one powerful place
+                managing conversations
               </span>
             </h2>
             
             <p className="text-lg text-gray-300 leading-relaxed">
-              Connect WhatsApp, SMS, Email, Telegram, and Discord. Manage everything from a single, beautiful interface.
+              Start your journey with the most powerful unified messaging platform. Everything you need in one place.
             </p>
           </div>
 
-          <div className="flex gap-4 pt-4">
-            {["WhatsApp", "Email", "SMS", "Telegram", "Discord"].map((platform, i) => (
+          {/* Feature list */}
+          <div className="space-y-4 pt-4">
+            {features.map((feature, i) => (
               <div
-                key={platform}
-                className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm text-white hover:bg-white/20 transition-all duration-300"
+                key={i}
+                className="flex items-center gap-3 text-white"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
-                {platform}
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-gray-200">{feature}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Right side - Login form */}
+      {/* Right side - Register form */}
       <div className="flex-1 flex items-center justify-center p-8 relative z-10">
         <div className="w-full max-w-md">
           {/* Glass card effect */}
@@ -75,12 +108,28 @@ export default function LoginPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-purple-500/50 mb-4">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-white">Welcome back</h2>
-              <p className="text-gray-300">Sign in to your account to continue</p>
+              <h2 className="text-3xl font-bold text-white">Create account</h2>
+              <p className="text-gray-300">Start managing your messages today</p>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleRegister} className="space-y-5">
+              {/* Name input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-200">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
               {/* Email input */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-200">Email</label>
@@ -90,8 +139,8 @@ export default function LoginPage() {
                     type="email"
                     placeholder="you@example.com"
                     className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                     required
                   />
                 </div>
@@ -106,23 +155,36 @@ export default function LoginPage() {
                     type="password"
                     placeholder="••••••••"
                     className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
                     required
+                    minLength={6}
                   />
                 </div>
+                <p className="text-xs text-gray-400 ml-1">Must be at least 6 characters</p>
               </div>
 
-              {/* Remember & Forgot */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-400 bg-white/10" />
-                  Remember me
-                </label>
-                <a href="#" className="text-purple-400 hover:text-purple-300 transition-colors">
-                  Forgot password?
-                </a>
-              </div>
+              {/* Error message */}
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Terms agreement */}
+              <label className="flex items-start gap-2 text-sm text-gray-300 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-gray-400 bg-white/10 mt-0.5" 
+                  required 
+                />
+                <span>
+                  I agree to the{" "}
+                  <a href="#" className="text-purple-400 hover:text-purple-300">Terms of Service</a>
+                  {" "}and{" "}
+                  <a href="#" className="text-purple-400 hover:text-purple-300">Privacy Policy</a>
+                </span>
+              </label>
 
               {/* Submit button */}
               <button
@@ -133,10 +195,10 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Signing in...
+                    Creating account...
                   </>
                 ) : (
-                  "Sign In"
+                  "Create Account"
                 )}
               </button>
             </form>
@@ -147,13 +209,13 @@ export default function LoginPage() {
                 <div className="w-full border-t border-white/20"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-transparent text-gray-400">Or continue with</span>
+                <span className="px-4 bg-transparent text-gray-400">Or sign up with</span>
               </div>
             </div>
 
-            {/* Google Sign In */}
+            {/* Google Sign Up */}
             <button
-              onClick={() => signIn("google", { callbackUrl: "/inbox" })}
+              onClick={() => {/* Add Google OAuth handler */}}
               className="w-full py-3.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white font-medium hover:bg-white/20 transition-all flex items-center justify-center gap-3 group"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -174,25 +236,33 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              <span>Sign in with Google</span>
+              <span>Continue with Google</span>
             </button>
 
-            {/* Sign up link */}
+            {/* Sign in link */}
             <p className="text-center text-sm text-gray-300">
-              Don't have an account?{" "}
-              <a href="#" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                Sign up for free
+              Already have an account?{" "}
+              <a href="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+                Sign in
               </a>
             </p>
           </div>
 
-          {/* Footer text */}
-          <p className="mt-8 text-center text-sm text-gray-400">
-            By signing in, you agree to our{" "}
-            <a href="#" className="text-purple-400 hover:text-purple-300">Terms</a>
-            {" "}and{" "}
-            <a href="#" className="text-purple-400 hover:text-purple-300">Privacy Policy</a>
-          </p>
+          {/* Footer badges */}
+          <div className="mt-8 flex justify-center gap-6 text-xs text-gray-400">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-green-400"></div>
+              <span>Secure</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+              <span>Encrypted</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+              <span>GDPR Compliant</span>
+            </div>
+          </div>
         </div>
       </div>
 
