@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📬 Unified Inbox
 
-## Getting Started
+Unified Inbox is a full-stack communication platform that brings together messages from multiple channels — **Gmail, WhatsApp, SMS (Twilio), Telegram, and Discord** — into one unified dashboard.  
+It provides businesses and teams a single place to view, respond to, and analyze customer conversations efficiently.
 
-First, run the development server:
+> Built using **Next.js 14 (App Router)**, **Prisma ORM**, **NextAuth**, **PostgreSQL (Supabase)**, **React Query**, and **Tailwind CSS**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌐 Live Demo
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🔗 **Deployed App:** [https://unified-inbox-sigma.vercel.app](https://unified-inbox-sigma.vercel.app)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+🎥 **Demo Video:**  
+▶️ [Click to watch the demo video](https://github.com/aryandhandhukiya/unified-inbox/releases/tag/V1.0.0/unified-demo.2.mp4)
+---
 
-## Learn More
+## 🚀 Features
 
-To learn more about Next.js, take a look at the following resources:
+✅ **Multi-Channel Messaging**
+- Gmail integration for email sync and reply  
+- WhatsApp (Twilio) integration for two-way chat  
+- Telegram bot integration  
+- Discord webhook support  
+- SMS communication via Twilio
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+✅ **Analytics Dashboard**
+- Channel usage metrics  
+- Message delivery status tracking  
+- Contact activity insights  
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+✅ **Authentication**
+- Secure sign-in via **Google OAuth** and **Email/Password**  
+- Protected routes using **NextAuth Middleware**
 
-## Deploy on Vercel
+✅ **Modern UI**
+- Fully responsive **Tailwind CSS** layout  
+- Real-time chat interface built with **React Query**  
+- Smooth transitions and dark mode ready  
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+✅ **Scalable Backend**
+- **Prisma ORM** for database management  
+- **Supabase PostgreSQL** for cloud-hosted data  
+- **Serverless API routes** hosted on Vercel  
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-------------|
+| **Frontend** | Next.js 14, React Query, Tailwind CSS |
+| **Backend** | Next.js API Routes, Prisma ORM |
+| **Database** | PostgreSQL (Supabase Cloud) |
+| **Authentication** | NextAuth.js (Google + Credentials) |
+| **Messaging APIs** | Twilio (SMS & WhatsApp), Telegram Bot, Discord Webhook |
+| **Email** | Gmail API (OAuth Playground Integration) |
+| **Deployment** | Vercel |
+| **Realtime Sync** | ngrok (for local webhooks) |
+
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in the root directory and include the following:
+
+```env
+# PostgreSQL (Supabase)
+DATABASE_URL=postgresql://postgres.USER:PASSWORD@HOST:5432/postgres?sslmode=require
+
+# NextAuth
+NEXTAUTH_URL=https://unified-inbox-sigma.vercel.app
+NEXTAUTH_SECRET=YOUR_STRONG_SECRET
+
+# Google OAuth
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+
+# Gmail Integration
+GMAIL_REDIRECT_URI=https://developers.google.com/oauthplayground
+GMAIL_REFRESH_TOKEN=YOUR_REFRESH_TOKEN
+GMAIL_USER=youremail@gmail.com
+
+# Twilio (SMS + WhatsApp)
+TWILIO_ACCOUNT_SID=YOUR_TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN=YOUR_TWILIO_AUTH_TOKEN
+TWILIO_SMS_NUMBER=+1234567890
+TWILIO_WHATSAPP_NUMBER=+14155238886
+
+# Telegram
+TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
+
+# Discord
+DISCORD_WEBHOOK_URL=YOUR_DISCORD_WEBHOOK_URL
+
+# Email SMTP (for notifications)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=youremail@gmail.com
+SMTP_PASS=your_app_password
+EMAIL_FROM="Unified Inbox <youremail@gmail.com>"
+
+# ngrok (for local testing)
+NEXT_PUBLIC_BASE_URL=https://YOUR_NGROK_URL.ngrok-free.app
